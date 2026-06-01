@@ -1,6 +1,27 @@
-# Speech / Audio Classification System (KNN & MLP)
+># Speech / Audio Classification System (KNN & MLP)
+- [1. Introduction](#1-introduction)
+- [2. Architecture](#2-architecture)
+- [3. Implementation Overview](#3-implementation-overview)
+  - [Tools Used](#tools-used)
+  - [Dataset Overview](#dataset-overview)
+- [4. Code Structure](#4-code-structure)
+- [5. Feature Extraction](#5-feature-extraction)
+- [6. Dataset Builder](#6-dataset-builder)
+- [7. KNN Model](#7-knn-model)
+  - [Overview](#overview)
+  - [Training Steps](#training-steps)
+- [8. MLP Model](#8-mlp-model)
+  - [Overview](#overview-1)
+  - [Architecture](#architecture)
+  - [Training Process](#training-process)
+  - [Why One-Hot Encoding?](#why-one-hot-encoding)
+  - [Training Configuration](#training-configuration)
+- [9. Model Inference (`testModel`)](#9-model-inference-testmodel)
+- [10. Transcript Evaluation](#10-transcript-evaluation)
+  - [Process](#process)
+  - [Metrics](#metrics)
+- [11. Execution](#11-execution)
 
-{tableofcontent}
 
 ---
 
