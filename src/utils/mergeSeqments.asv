@@ -1,0 +1,28 @@
+function results = mergeSeqments(startTimes, endTimes, labels)
+    mergedStart = [];
+    mergedEnd = [];
+    margedLabel = categorical();
+
+    curLabel = labels(1);
+    curStart = startTimes(1);
+    curEnd = endTimes(1);
+
+    for i = 2:length(labels)
+        if labels(i) == curLabel
+            currentEnd = endTimes(i);
+        else
+            mergedStart(end + 1) = curStart;
+            mergedEnd(end + 1) = currentEnd;
+            margedLabel(end + 1) = curLabel;
+            curLabel = labels(i);
+            curStart = startTimes(i);
+            curEnd = endTimes(i);
+        end
+    end
+
+    mergedStart(end+1,1) = curStart;
+    mergedEnd(end+1,1) = currentEnd;
+    mergedLabel(end+1,1)
+    results = table(mergedStart', mergedEnd', margedLabel', 'VariableNames', {'Start', 'End', 'Label'});
+
+end

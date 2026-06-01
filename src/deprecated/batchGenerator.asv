@@ -1,0 +1,135 @@
+noisePath = "train/noise/free-sound/";
+speechPath = "train/speech/us-gov/";
+
+% Create full noise and speech paths
+noise = dir(fullfile(noisePath, '*.wav'));
+speech= dir(fullfile(speechPath, '*.wav'));
+
+noiseFiles = fullfile({noise.folder},{noise.name});
+speechFiles = fullfile({speech.folder},{speech.name});
+
+% randomize the lists
+speechFiles = speechFiles(randperm(length(speechFiles))); 
+noiseFiles = noiseFiles(randperm(length(noiseFiles)));
+
+chunkDuration = 0.5; %seconds
+sampleRate = 16000;
+batchSize =16;
+
+chunkSamples = round(sampleRate * chunkDuration);
+
+% X = chunks Y = 1:spech ,0:noise
+% X = zeros(chunkSamples, batchsize);
+% Y = zeros(batchsize,1);
+
+X=zeros(batchSize,17);
+Y=categorical(strings(batchSize,1));
+
+speechIdx =1;
+noiseIdx =1;
+% allocate half chunks to speechSamples
+for i= 1:batchSize/2
+    file = speechFiles{speechIdx};
+    chunk = randomChunk(sampleRate,chunkSamples,file);
+    
+    feat = extractFeatures(chunk,sampleRate);
+
+    % X(:, i) = chunk; % Store the speech chunk in X
+    % Y(i) = 1; % Mark with 1: speech
+    X(i,:) = feat;
+    Y(i,:) = "speech";
+
+    speechIdx = speechIdx +1;
+    
+    % Check if we reached the end of speechFile list
+    if speechIdx > length(speechFiles)
+        speechIdx = 1;
+        speechFiles = speechFiles(randperm(length(speechFiles)));
+    end
+end
+
+% allocate half chunks to noiseSamples
+for i = 1: batchSize/2
+    file = noiseFiles{noiseIdx};
+    chunk = randomChunk(sampleRate,chunkSamples,file);
+    
+    feat = extractFeatures(chunk,sampleRate);
+
+    idx = batchSize/2 + i;
+    X(i,:) = feat; % Store the speech chunk in X
+    Y(i,:) = "noise"; % Mark with 0: noise
+    noiseIdx = noiseIdx +1;
+    
+    % Check if we reached the end of speechFile list
+    if noiseIdx > length(noiseFiles)
+        noiseIdx = 1;
+        noiseFiles = noiseFiles(randperm(length(noiseFiles)));
+    end
+end
+
+% Randomize the order of the combined dataset
+combinedIdx = randperm(length(Y));
+X = X(combinedIdx, :);
+Y = Y(combinedIdx);
+
+% K =5;
+
+% Mdl = fitcknn(X,Y,OptimizeHyperparameters="auto", ...
+%     HyperparameterOptimizationOptions= ...
+%     struct(AcquisitionFunctionName="expected-improvement-plus"))
+% result
+% Best estimated feasible point (according to models):
+%     NumNeighbors     Distance     Standardize
+%     ____________    __________    ___________
+% 
+%          2          seuclidean       false   
+
+
+model = fitcknn(X,Y,...
+    NumNeighbors= 2, ...
+    Distance= "seuclidean", ...
+    Standardize= false)
+
+% save("knn_model.mat",model);
+testFiles = 114;
+Xtest = seros114,17];
+Ytest= categorical();
+
+testNoisePath = "eval/noise/";
+testSpeechPath = "eval/speech/";
+
+% Create full noise and speech paths
+testNoise = dir(fullfile(testNoisePath, '*.wav'));
+testSpeech= dir(fullfile(testSpeechPath, '*.wav'));
+testSpeechFiles= fullfile({testSpeech.folder},{testSpeech.name});
+testNoiseFiles= fullfile({testNoise.folder},{testNoise.name});
+
+for i = 1:length(testSpeechFiles)
+    file = testSpeechFiles{i};
+    
+    chunk = randomChunk(sampleRate,chunkSamples,file);
+    feat = extractFeatures(chunk,sampleRate);
+
+    Xtest(i,:) = feat;
+    Ytest(i,:) = categorical("speech");
+end
+
+for i = 1:length(testNoiseFiles)
+    file = testNoiseFiles{i};
+    
+    chunk = randomChunk(sampleRate,chunkSamples,file);
+    feat = extractFeatures(chunk,sampleRate);
+
+    Xtest(i,:) = feat;
+    Ytest(i,:) = categorical("noise");
+end
+
+Ypred = predict(model,Xtest);
+Ypred = categorical(Ypred);
+
+accuracy = sum(Ypred == Ytest) / numel(Ytest);
+fprintf("Test Accuracy: %.2f%%\n",accuracy*100);
+
+figure;
+confusionchart(Ytest,Ypred);
+title("K-nn Speech vs Nosie Classification");
